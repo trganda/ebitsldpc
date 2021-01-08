@@ -1,0 +1,25 @@
+number_of_bits_per_constellation_point
+4
+number_of_symbols_per_constallation_point
+2
+"modulation_symbol"____"binary_expression"____"mapping(real_image_..._real_image)" 
+0   0 0 0 0  -1  -1
+1   0 0 0 1  -3  -1
+2   0 0 1 0  -1  -3
+3   0 0 1 1  -3  -3
+
+4   0 1 0 0   1  -1 
+5   0 1 0 1   1  -3
+6   0 1 1 0   3  -1
+7   0 1 1 1   3  -3
+
+8   1 0 0 0  -1   1 
+9   1 0 0 1  -1   3 
+10  1 0 1 0  -3   1
+11  1 0 1 1  -3   3
+
+
+12  1 1 0 0   1   1 
+13  1 1 0 1   3   1
+14  1 1 1 0   1   3
+15  1 1 1 1   3   3

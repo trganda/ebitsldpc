@@ -1,0 +1,32 @@
+# range
+[range]
+    minimum_snr = 15.0
+    maximum_snr = 15.0
+    step_snr = 5.0
+    maximum_error_number = 1
+    maximum_block_number = 1
+    # maximum blocks for each threads under the snr
+    thread_block_number = 1
+
+[decoder]
+    true_h_arg = false
+
+[xcodec]
+    # default, using normal ldcp.
+    5gldpc = false
+    # (false) hard metric, (true) soft metric
+    metric_type = false
+    # only use for 5g ldpc
+    metric_iter = 5
+
+[histogram]
+    enable = false
+
+[ldpc]
+    max_iter = 50
+    # (false) not encode, (true) encode
+    active = true
+    matrix_file = "PEG2304regular0.5.txt"
+
+[modem]
+    modem_file = "4bit_16QAM_Gray.txt"

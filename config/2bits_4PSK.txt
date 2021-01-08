@@ -1,0 +1,9 @@
+number_of_bits_per_symbol
+2
+number_of_symbols_per_constallation_point
+2
+"decimal_expression"____"binary_expression"____"symbol(real_image_..._real_image)"
+0                    0 0       1.0000000000   0.0000000000  
+1                    0 1       0.0000000000   1.0000000000  
+2                    1 0      -1.0000000000   0.0000000000  
+3                    1 1      -0.0000000000  -1.0000000000  
