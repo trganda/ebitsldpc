@@ -60,9 +60,9 @@ ModemLinearSystem::SoftAWGNDemodulation(
     sqr_norm = (symbol.real() * symbol.real() + symbol.imag() * symbol.imag()) / var_;
     symbol_prob[i] = -sqr_norm;
   }
-  auto max_prob = std::max_element(symbol_prob.begin(), symbol_prob.end());
+  auto max_prob = *std::max_element(symbol_prob.begin(), symbol_prob.end());
   for (int i = 0; i < symbol_num_; i++) {
-    symbol_prob[i] = exp(symbol_prob[i] - *max_prob);
+    symbol_prob[i] = exp(symbol_prob[i] - max_prob);
   }
   // normalization
   double sum = 0.0;

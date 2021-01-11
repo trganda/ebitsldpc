@@ -4,6 +4,7 @@
 #include "log.h"
 #include "randnum.h"
 #include "toml.hpp"
+#include "simulator.h"
 
 int
 main() {
@@ -28,7 +29,10 @@ main() {
   std::ifstream ifs("config.toml", std::ios_base::binary);
   if (ifs.is_open()) {
     auto arguments = toml::parse(ifs);
-
+    int constraint = 3;
+    std::vector<int> polynomials = {7, 5};
+    lab::ViterbiCodec ccode (constraint, polynomials);
+    auto ret = ccode.Decode("0011100001100111111000101100111011");
     ifs.close();
   } else {
     lab::logger::ERROR("Encouter error while opening config.toml", true);

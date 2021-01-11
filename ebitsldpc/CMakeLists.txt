@@ -55,7 +55,7 @@ find_package(Threads REQUIRED)
 add_subdirectory("lib")
 
 # Add source to this project's executable.
-add_executable (ebitsldpc "ebitsldpc.cpp" ${SRC})
+add_executable (ebitsldpc "ebitsldpc.cc" ${SRC})
 
 target_link_libraries(ebitsldpc PRIVATE lab toml11 Threads::Threads)
 # add the binary tree to the search path for include files
