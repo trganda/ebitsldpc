@@ -32,7 +32,9 @@ main() {
     int constraint = 3;
     std::vector<int> polynomials = {7, 5};
     lab::ViterbiCodec ccode (constraint, polynomials);
-    auto ret = ccode.Decode("0011100001100111111000101100111011");
+//    auto ret = ccode.Decode("0011100001100111111000101100111011");
+//    auto ret_debug = ccode.PLVDecode("0011100001100111111000101100111011", 5);
+    auto ret_debug = ccode.PLVDecode("10100001110111", 2);
     ifs.close();
   } else {
     lab::logger::ERROR("Encouter error while opening config.toml", true);

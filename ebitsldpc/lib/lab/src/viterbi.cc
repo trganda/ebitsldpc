@@ -42,6 +42,52 @@ ViterbiCodec::Decode(const std::string &bits) const {
   return decoded.substr(0, decoded.size() - constraint_ + 1);
 }
 
+std::vector<std::string>
+ViterbiCodec::PLVDecode(const std::string &bits, unsigned int L) const {
+  PLV_Trellis trellis;
+  // k_path_metrics[j][k] means that k-th path metric to state j
+  std::vector<std::vector<int>> k_path_metrics(
+      1<<(constraint_-1), std::vector<int>(L, std::numeric_limits<int>::max()));
+//  k_path_metrics.front().front() = 0;
+  for (size_t i = 0; i < L; i++) {
+    k_path_metrics[0][i] = 0;
+  }
+
+  for (size_t i = 0; i < bits.size(); i += num_parity_bits()) {
+    std::string current_bits(bits, i, num_parity_bits());
+    // If some bits are missing, fill with trailing zeros.
+    // This is not ideal but it is the best we can do.
+    if (current_bits.size() < num_parity_bits()) {
+      current_bits.append(
+          std::string(num_parity_bits() - current_bits.size(), '0'));
+    }
+    UpdatePathMetrics(current_bits, k_path_metrics, trellis);
+  }
+
+  // Traceback
+  std::vector<std::string> decodes;
+  std::vector<int> end_state(L, 0);
+  // Temp metrics for finding the last state occupied by k-th best path.
+  std::vector<int> metrics(k_path_metrics.size());
+  for (unsigned int i = 0; i < L; i++) {
+    for (size_t j=0; j<k_path_metrics.size(); j++) {
+      metrics[j] = k_path_metrics[j][i];
+    }
+    end_state[i] = std::distance(metrics.begin(), std::min_element(metrics.begin(), metrics.end()));
+  }
+
+  for (unsigned int i = 0; i<L; i++) {
+    std::string k_result;
+    for (int j = trellis.size() - 1; j>=0; j--) {
+      k_result += end_state[i] >> (constraint_ - 2) ? "1" : "0";
+      end_state[i] = trellis[j][end_state[i]][i];
+    }
+    std::reverse(k_result.begin(), k_result.end());
+    decodes.push_back(k_result.substr(0, k_result.size() - constraint_ + 1));
+  }
+  return decodes;
+}
+
 void
 ViterbiCodec::initializeOutputs() {
   outputs_.resize(1 << constraint_);
@@ -62,9 +108,10 @@ ViterbiCodec::initializeOutputs() {
 }
 
 void
-ViterbiCodec::UpdatePathMetrics(const std::string &bits,
-                                std::vector<int> &path_metrics,
-                                ViterbiCodec::Trellis &trellis) const {
+ViterbiCodec::UpdatePathMetrics(
+    const std::string &bits,
+    std::vector<int> &path_metrics,
+    ViterbiCodec::Trellis &trellis) const {
   std::vector<int> new_path_metrics(path_metrics.size());
   std::vector<int> new_trellis_column(1 << (constraint_ - 1));
   for (size_t i = 0; i < path_metrics.size(); i++) {
@@ -75,6 +122,30 @@ ViterbiCodec::UpdatePathMetrics(const std::string &bits,
 
   path_metrics = new_path_metrics;
   trellis.push_back(new_trellis_column);
+}
+
+void
+ViterbiCodec::UpdatePathMetrics(const std::string &bits,
+                                std::vector<std::vector<int>> &k_path_metrics,
+                                PLV_Trellis &trellis) const {
+  std::vector<std::vector<int>> new_k_path_metrics(
+      k_path_metrics.size(), std::vector<int>(k_path_metrics.front().size()));
+  std::vector<std::vector<int>> new_k_trellis_column(
+      k_path_metrics.size(), std::vector<int>(k_path_metrics.front().size()));
+  for (size_t i = 0; i < k_path_metrics.size(); i++) {
+    // Identify which k-th path metric was used
+    std::vector<std::vector<bool>> identifies(
+        k_path_metrics.size(), std::vector<bool>(k_path_metrics.front().size(), false));
+    // Loop L times
+    for (size_t j = 0; j < k_path_metrics[i].size(); j++) {
+      auto p = PathMetric(bits, k_path_metrics, identifies, i, j);
+      new_k_path_metrics[i][j] = p.first;
+      new_k_trellis_column[i][j] = p.second;
+    }
+  }
+
+  k_path_metrics = new_k_path_metrics;
+  trellis.push_back(new_k_trellis_column);
 }
 
 std::pair<int, int>
@@ -97,6 +168,43 @@ ViterbiCodec::PathMetric(const std::string &bits,
 
   return path_metric1 <= path_metric2 ? std::make_pair(path_metric1, source_state1) :
       std::make_pair(path_metric2, source_state2);
+}
+
+std::pair<int, int>
+ViterbiCodec::PathMetric(const std::string &bits,
+                         const std::vector<std::vector<int>> &prev_k_path_metrics,
+                         std::vector<std::vector<bool>> &prev_identifies,
+                         int state,
+                         int k) const {
+  // Find the source state that can transform to state
+  int s = (state << 1) & ((1 << (constraint_ - 1)) - 1);
+  int source_state1 = s | 0;
+  int source_state2 = s | 1;
+
+  // Find the first not using path metric
+  size_t selected_index1 = 0;
+  while (selected_index1 < prev_identifies[source_state1].size() && prev_identifies[source_state1][selected_index1]) {
+    selected_index1++;
+  }
+  int k_path_metric1 = prev_k_path_metrics[source_state1][selected_index1];
+  if (k_path_metric1 < std::numeric_limits<int>::max()) {
+    k_path_metric1 += BranchMetric(bits, source_state1, state);
+  }
+
+  size_t selected_index2 = 0;
+  while (selected_index2 < prev_identifies[source_state2].size() && prev_identifies[source_state2][selected_index2]) {
+    selected_index2++;
+  }
+  int k_path_metric2 = prev_k_path_metrics[source_state2][selected_index2];
+  if (k_path_metric2 < std::numeric_limits<int>::max()) {
+    k_path_metric2 += BranchMetric(bits, source_state2, state);
+  }
+
+  k_path_metric1 <= k_path_metric2 ? prev_identifies[source_state1][selected_index1] = true
+      : prev_identifies[source_state2][selected_index2] = true;
+
+  return k_path_metric1 <= k_path_metric2 ? std::make_pair(k_path_metric1, source_state1) :
+      std::make_pair(k_path_metric2, source_state2);
 }
 
 int
