@@ -111,4 +111,9 @@ void
 ModemLinearSystem::set_var(double var) {
   this->var_ = var;
 }
+
+double
+ModemLinearSystem::var() const{
+  return var_;
+}
 }// namespace lab

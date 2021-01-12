@@ -66,8 +66,17 @@ XORSegCodec::Encoder(int *uu, int *cc) {
 }
 
 void
-XORSegCodec::Decoder(lab::ModemLinearSystem &mls, int *uu_hat) {
-  auto ebits_hat = DecodeEbits();
+XORSegCodec::Decoder(lab::ModemLinearSystem &mls, std::vector<std::complex<double>> &angles, int *uu_hat) {
+  DecodeEbits(mls, angles, uu_hat);
+  int temp[cc_len_];
+  lab::utility::MatrixProd(uu_hat + uu_len_, temp,
+                           generator_matrix_, ebits_len_, cc_len_);
+  for (int i=0; i<cc_len_; i++) {
+    if (temp[i]) {
+      bit_l_out_[i] = 1 - bit_l_out_[i];
+    }
+  }
+  ldpc_codec_->Decoder(bit_l_out_, uu_hat, ldpc_codec_->max_iter());
 }
 
 int
@@ -85,9 +94,19 @@ XORSegCodec::cc_len() const {
   return cc_len_;
 }
 
-std::vector<int>
-XORSegCodec::DecodeEbits() {
-  return std::vector<int>();
+void
+XORSegCodec::DecodeEbits(lab::ModemLinearSystem &mls, std::vector<std::complex<double>> &angles, int *uu_hat) {
+  std::vector<std::vector<double>> branch_metrics(ebits_len_, std::vector<double>(angles.size()));
+  auto received_symbols = mls.GetRecvSymbol();
+  auto constellations = mls.constellations();
+  auto partition_length = received_symbols.size() / ebits_len_;
+  for (size_t i=0; i<branch_metrics.size(); i++) {
+    auto symbols = std::vector<std::complex<double>>(received_symbols.begin() + i * partition_length,
+        received_symbols.begin() + (i+1) * partition_length);
+    for (size_t j=0; j<branch_metrics[i].size(); j++) {
+      branch_metrics[i][j] = AdaptFunc(symbols, constellations, angles[j], mls.var());
+    }
+  }
 }
 
 void
@@ -116,13 +135,13 @@ XORSegCodec::AdaptFunc(std::vector<std::complex<double>> &data,
   }
 
   for (auto i : data) {
-    double logsum = 0.0;
+    double sum = 0.0;
     for (auto j : symbols) {
       double alpha = 1.0 / symbols.size();
       std::complex<double> differ = i - j;
-      logsum += alpha * co * exp(-((pow(differ.real(), 2) + pow(differ.imag(), 2)) / var));
+      sum += alpha * co * exp(-((pow(differ.real(), 2) + pow(differ.imag(), 2)) / var));
     }
-    result += log(logsum);
+    result += log(sum);
   }
   result /= double(data.size());
   return result;

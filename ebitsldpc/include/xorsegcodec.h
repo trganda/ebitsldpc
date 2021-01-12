@@ -21,13 +21,14 @@ class XORSegCodec {
   explicit XORSegCodec(toml::value arguments);
   virtual ~XORSegCodec();
   void Encoder(int *uu, int *cc);
-  void Decoder(lab::ModemLinearSystem &mls, int *uu_hat);
+  void Decoder(lab::ModemLinearSystem &mls,
+               std::vector<std::complex<double>> &angles, int *uu_hat);
   int uu_len() const;
   int ebits_len() const;
   int cc_len() const;
 
  private:
-  std::vector<int> DecodeEbits();
+  void DecodeEbits(lab::ModemLinearSystem &mls, std::vector<std::complex<double>> &angles, int *uu_hat);
   void DeMapping(lab::ModemLinearSystem &mls,
                  std::vector<std::pair<int, std::complex<double>>> &thetaList) const;
   int GetParityCheck() const;
@@ -39,13 +40,13 @@ class XORSegCodec {
  private:
   const toml::value arguments_;
   std::unique_ptr<lab::BinaryLDPCCodec> ldpc_codec_;
-  int iter_cnt_;// iteration times while using LDPC on 5G
+  int iter_cnt_;    // iteration times while using LDPC on 5G
   bool using_ldpc_5g_;
   bool using_syndrom_metric_;
-  int uu_len_;   // length of uu for LDPC
-  int ebits_len_;// length of ebits
-  int cc_len_;   // length of cc for LDPC
-  int *rr_;      // hard decision
+  int uu_len_;      // length of uu for LDPC
+  int ebits_len_;   // length of ebits
+  int cc_len_;      // length of cc for LDPC
+  int *rr_;         // hard decision
   std::vector<std::vector<int>> generator_matrix_;
   double *bit_l_in_; // bit input probability
   double *bit_l_out_;// bit out probability

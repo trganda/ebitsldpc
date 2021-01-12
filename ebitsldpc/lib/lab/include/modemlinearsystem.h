@@ -25,6 +25,7 @@ class ModemLinearSystem : public Modem {
  public:
   void set_sigma(double sigma);
   void set_var(double var);
+  double var() const;
 
  private:
   void SoftDemodulation(std::vector<std::pair<int, std::complex<double>>> &thetaList) const;

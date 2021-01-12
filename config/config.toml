@@ -7,6 +7,8 @@
     maximum_block_number = 1
     # maximum blocks for each threads under the snr
     thread_block_number = 1
+    # total angle
+    angle_size = 2
 
 [xcodec]
     # default, using normal ldcp.
@@ -16,7 +18,7 @@
     # only use for 5g ldpc
     metric_iter = 5
     # length of extra bits
-    ebits_length = 1
+    ebits_length = 5
     # size of list for decoding extra bits
     list_size = 1
 

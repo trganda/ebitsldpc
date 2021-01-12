@@ -58,7 +58,7 @@ typedef struct CodecData {
 
 class Simulator {
  public:
-  explicit Simulator(toml::value arguments);
+  explicit Simulator(toml::value &arguments);
   virtual ~Simulator() = default;
   void Run();
 
@@ -87,6 +87,8 @@ class Simulator {
   unsigned int max_num_blk_;
   // Maximum blocks for each threads
   unsigned int thread_num_blk_;
+  // Total angle
+  std::vector<std::complex<double>> angles_;
   XORSegCodec codec_;
   CodecData codec_data_;
   lab::ModemLinearSystem modem_linear_system_;

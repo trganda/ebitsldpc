@@ -1,6 +1,6 @@
 #include "simulator.h"
 
-Simulator::Simulator(toml::value arguments)
+Simulator::Simulator(toml::value &arguments)
     : arguments_(std::move(arguments)), codec_(XORSegCodec(arguments_)),
       codec_data_(codec_.uu_len() + codec_.ebits_len(), codec_.cc_len()),
       modem_linear_system_(lab::ModemLinearSystem(arguments_, codec_.cc_len())) {
@@ -11,7 +11,12 @@ Simulator::Simulator(toml::value arguments)
   max_err_blk_ = toml::find<int>(range, "maximum_error_number");
   max_num_blk_ = toml::find<int>(range, "maximum_block_number");
   thread_num_blk_ = toml::find<int>(range, "thread_block_number");
-  const auto decoder = toml::find(arguments_, "decoder");
+  int angle_size = toml::find<int>(range, "angle_size");
+  angles_ = std::vector<std::complex<double>>(angle_size);
+  for (size_t i = 0; i < angles_.size(); i++) {
+    auto angle = ((lab::kPi / 2) / angles_.size()) * i;
+    angles_[i] = std::complex<double>(0, exp(angle));
+  }
   std::stringstream stream;
   stream << '[' << std::fixed << std::setprecision(3) << min_snr_ << ',' << step_snr_ << ',' << max_snr_ << ']';
   lab::logger::INFO(stream.str(), true);
@@ -23,7 +28,7 @@ Simulator::Simulator(toml::value arguments)
 void
 Simulator::Run() {
   // Threads number
-  const auto max_threads = (unsigned long)((max_snr_ - min_snr_) / step_snr_ + 1);
+  const auto max_threads = (unsigned long) ((max_snr_ - min_snr_) / step_snr_ + 1);
   // Save simulation results
   std::vector<std::pair<double, double>> ber_result(max_threads);
   std::vector<std::pair<double, double>> fer_result(max_threads);
@@ -66,9 +71,9 @@ Simulator::Run() {
 }
 
 std::pair<double, double>
-Simulator::run(
-    XORSegCodec &codec, lab::ModemLinearSystem mls, CodecData &cdata,
-    double snr, bool histogram_enable) {
+Simulator::run(XORSegCodec &codec,
+               lab::ModemLinearSystem mls, CodecData &cdata,
+               double snr, bool histogram_enable) {
   //var_ = pow(10.0, -0.1 * (snr)) / (codec_.m_coderate * modem_linear_system_.modem_.input_len_);
   double var = pow(10.0, -0.1 * (snr));
   double sigma = sqrt(var);
@@ -77,7 +82,7 @@ Simulator::run(
   lab::threadsafe_sourcesink ssink = lab::threadsafe_sourcesink();
   lab::threadsafe_sourcesink ebits_ssink = lab::threadsafe_sourcesink();
   ssink.ClrCnt();
-  std::fstream out;
+  ebits_ssink.ClrCnt();
   {
     lab::ThreadsPool threads_pool;
     std::vector<std::future<void>> rets;
@@ -88,7 +93,7 @@ Simulator::run(
       max_blocks -= blocks;
       rets.push_back(
           threads_pool.submit(
-              [this, codec, mls, &ssink, &ebits_ssink, cdata, snr, histogram_enable, blocks] {
+              [this, codec, mls, &ssink, &ebits_ssink, cdata, snr, blocks] {
                 run_blocks(
                     codec, mls, std::ref(ssink), std::ref(ebits_ssink), cdata,
                     snr, blocks);
@@ -104,19 +109,22 @@ Simulator::run(
 }
 
 void
-Simulator::run_blocks(
-    XORSegCodec codec, lab::ModemLinearSystem mls, lab::threadsafe_sourcesink &ssink,
-    lab::threadsafe_sourcesink &ebits_ssink, CodecData cdata,
-    double snr, const unsigned int max_block) const {
+Simulator::run_blocks(XORSegCodec codec,
+                      lab::ModemLinearSystem mls, lab::threadsafe_sourcesink &ssink,
+                      lab::threadsafe_sourcesink &ebits_ssink, CodecData cdata,
+                      double snr, const unsigned int max_block) const {
   for (unsigned int i = 0; i < max_block; i++) {
     if (*ssink.try_tot_blk() >= max_num_blk_ || *ssink.try_err_blk() >= max_err_blk_) { return; }
     ssink.GetBitStr(cdata.uu_, cdata.uu_len_);
     ebits_ssink.GetBitStr(cdata.uu_ + codec.uu_len(), codec_.ebits_len());
     codec.Encoder(cdata.uu_, cdata.cc_);
+
     // Generate H
-    std::complex<double> true_h(1, 0);
-    std::vector<std::complex<double>> generated_h(1);
-    for (auto &item : generated_h) { item = true_h; }
+    std::vector<std::complex<double>> generated_h(codec_.ebits_len());
+    for (size_t j = 0; j < generated_h.size(); j++) {
+      generated_h[j] = angles_[codec_data_.uu_[codec_data_.uu_len_ + j]];
+    }
+
     // Modulation and pass through the channel
     mls.PartitionModemLSystem(cdata.cc_, generated_h);
 
