@@ -47,11 +47,8 @@ ViterbiCodec::PLVDecode(const std::string &bits, unsigned int L) const {
   PLV_Trellis trellis;
   // k_path_metrics[j][k] means that k-th path metric to state j
   std::vector<std::vector<int>> k_path_metrics(
-      1<<(constraint_-1), std::vector<int>(L, std::numeric_limits<int>::max()));
-//  k_path_metrics.front().front() = 0;
-  for (size_t i = 0; i < L; i++) {
-    k_path_metrics[0][i] = 0;
-  }
+      1 << (constraint_ - 1), std::vector<int>(L, std::numeric_limits<int>::max()));
+  k_path_metrics.front().front() = 0;
 
   for (size_t i = 0; i < bits.size(); i += num_parity_bits()) {
     std::string current_bits(bits, i, num_parity_bits());
@@ -67,18 +64,25 @@ ViterbiCodec::PLVDecode(const std::string &bits, unsigned int L) const {
   // Traceback
   std::vector<std::string> decodes;
   std::vector<int> end_state(L, 0);
-  // Temp metrics for finding the last state occupied by k-th best path.
-  std::vector<int> metrics(k_path_metrics.size());
-  for (unsigned int i = 0; i < L; i++) {
-    for (size_t j=0; j<k_path_metrics.size(); j++) {
-      metrics[j] = k_path_metrics[j][i];
+  unsigned int kL = 0;
+  for (auto &k_path_metric : k_path_metrics) {
+    if (k_path_metric[kL] == std::numeric_limits<int>::max()) {
+      break;
     }
-    end_state[i] = std::distance(metrics.begin(), std::min_element(metrics.begin(), metrics.end()));
+    kL++;
   }
+  // Temp metrics for finding the last state occupied by k-th best path.
+  //  std::vector<int> metrics(k_path_metrics.size());
+  //  for (unsigned int i = 0; i < L; i++) {
+  //    for (size_t j=0; j<k_path_metrics.size(); j++) {
+  //      metrics[j] = k_path_metrics[j][i];
+  //    }
+  //    end_state[i] = std::distance(metrics.begin(), std::min_element(metrics.begin(), metrics.end()));
+  //  }
 
-  for (unsigned int i = 0; i<L; i++) {
+  for (unsigned int i = 0; i < kL; i++) {
     std::string k_result;
-    for (int j = trellis.size() - 1; j>=0; j--) {
+    for (int j = trellis.size() - 1; j >= 0; j--) {
       k_result += end_state[i] >> (constraint_ - 2) ? "1" : "0";
       end_state[i] = trellis[j][end_state[i]][i];
     }
@@ -138,7 +142,7 @@ ViterbiCodec::UpdatePathMetrics(const std::string &bits,
         k_path_metrics.size(), std::vector<bool>(k_path_metrics.front().size(), false));
     // Loop L times
     for (size_t j = 0; j < k_path_metrics[i].size(); j++) {
-      auto p = PathMetric(bits, k_path_metrics, identifies, i, j);
+      auto p = PathMetric(bits, k_path_metrics, identifies, i);
       new_k_path_metrics[i][j] = p.first;
       new_k_trellis_column[i][j] = p.second;
     }
@@ -167,15 +171,14 @@ ViterbiCodec::PathMetric(const std::string &bits,
   }
 
   return path_metric1 <= path_metric2 ? std::make_pair(path_metric1, source_state1) :
-      std::make_pair(path_metric2, source_state2);
+                                        std::make_pair(path_metric2, source_state2);
 }
 
 std::pair<int, int>
 ViterbiCodec::PathMetric(const std::string &bits,
                          const std::vector<std::vector<int>> &prev_k_path_metrics,
                          std::vector<std::vector<bool>> &prev_identifies,
-                         int state,
-                         int k) const {
+                         int state) const {
   // Find the source state that can transform to state
   int s = (state << 1) & ((1 << (constraint_ - 1)) - 1);
   int source_state1 = s | 0;
@@ -200,11 +203,10 @@ ViterbiCodec::PathMetric(const std::string &bits,
     k_path_metric2 += BranchMetric(bits, source_state2, state);
   }
 
-  k_path_metric1 <= k_path_metric2 ? prev_identifies[source_state1][selected_index1] = true
-      : prev_identifies[source_state2][selected_index2] = true;
+  k_path_metric1 <= k_path_metric2 ? prev_identifies[source_state1][selected_index1] = true : prev_identifies[source_state2][selected_index2] = true;
 
   return k_path_metric1 <= k_path_metric2 ? std::make_pair(k_path_metric1, source_state1) :
-      std::make_pair(k_path_metric2, source_state2);
+                                            std::make_pair(k_path_metric2, source_state2);
 }
 
 int
@@ -238,10 +240,10 @@ int
 HammingDistance(const std::string &x, const std::string &y) {
   assert(x.size() == y.size());
   int distance = 0;
-  for (int i = 0; i < x.size(); i++) {
+  for (size_t i = 0; i < x.size(); i++) {
     distance += x[i] != y[i];
   }
   return distance;
 }
 
-}
+}// namespace lab

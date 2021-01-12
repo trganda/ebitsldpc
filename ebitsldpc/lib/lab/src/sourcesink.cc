@@ -13,7 +13,7 @@ SourceSink::GetSymStr(int *uu, int qary, int len) {
   for (int t = 0; t < len; t++) {
     uu[t] = qary;
     while (uu[t] == qary)
-      uu[t] = (int) (qary * CLCRandNum::Get().Uniform());
+      uu[t] = (int)(qary * CLCRandNum::Get().Uniform());
   }
 }
 

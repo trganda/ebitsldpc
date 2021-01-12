@@ -40,7 +40,7 @@ class ThreadsPool {
   }
 
   template<typename FunctionType, typename... Args>
-  std::future<typename std::result_of<FunctionType(Args...)>::type> submit(FunctionType &&f, Args &&...args) {
+  std::future<typename std::result_of<FunctionType(Args...)>::type> submit(FunctionType &&f, Args &&... args) {
     using return_type = typename std::result_of<FunctionType(Args...)>::type;
 
     auto task = std::make_shared<std::packaged_task<return_type()>>(

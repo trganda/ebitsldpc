@@ -6,7 +6,7 @@ ModemLinearSystem::ModemLinearSystem(const toml::value &arguments, int cc_len)
       var_(0.0), sym_prob_(nullptr) {
   if (cc_len_ % input_len_ != 0) {
     lab::logger::ERROR(std::string(
-        "(cc_len_ = " + std::to_string(cc_len_) + " %% (input_len_ = " + std::to_string((input_len_)) + " ) != 0 !"),
+                           "(cc_len_ = " + std::to_string(cc_len_) + " %% (input_len_ = " + std::to_string((input_len_)) + " ) != 0 !"),
                        true);
     exit(-1);
   }

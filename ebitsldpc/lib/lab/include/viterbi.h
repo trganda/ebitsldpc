@@ -1,12 +1,12 @@
 #ifndef LAB_INCLUDE_VITERBI_H
 #define LAB_INCLUDE_VITERBI_H
 
-#include <vector>
-#include <utility>
-#include <string>
+#include <algorithm>
 #include <cassert>
 #include <limits>
-#include <algorithm>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace lab {
 
@@ -57,6 +57,11 @@ class ViterbiCodec {
   // the states occupied by best path was "02123310212100210", and we can get
   // the decoded information (removed flushing bits) is "01011100101000100"
   typedef std::vector<std::vector<int>> Trellis;
+  // The Parallel List Viterbi trellis table
+  // 3 dimension:[i][j][k]
+  //   1st-dim: time-instant i
+  //   2ed-dim: state j
+  //   3rd-dim: traceback for k-best path
   typedef std::vector<std::vector<std::vector<int>>> PLV_Trellis;
   void initializeOutputs();
   // Given num_parity_bits() received bits, update path metrics of all states
@@ -75,12 +80,12 @@ class ViterbiCodec {
   std::pair<int, int> PathMetric(const std::string &bits,
                                  const std::vector<std::vector<int>> &prev_k_path_metrics,
                                  std::vector<std::vector<bool>> &prev_identifies,
-                                 int state,
-                                 int k) const;
+                                 int state) const;
   int BranchMetric(const std::string &bits,
                    int source_state,
                    int target_state) const;
   std::string Output(int current_state, int input) const;
+
  private:
   const int constraint_;
   const std::vector<int> polynomials_;
@@ -94,9 +99,11 @@ class ViterbiCodec {
   std::vector<std::string> outputs_;
 };
 
-int ReverseBits(int num_bits, int input);
+int
+ReverseBits(int num_bits, int input);
 
-int HammingDistance(const std::string &x, const std::string &y);
+int
+HammingDistance(const std::string &x, const std::string &y);
 
-}
-#endif //LAB_INCLUDE_VITERBI_H
+}// namespace lab
+#endif//LAB_INCLUDE_VITERBI_H

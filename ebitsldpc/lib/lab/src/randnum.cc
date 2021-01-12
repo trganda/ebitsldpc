@@ -12,7 +12,7 @@ CLCRandNum::SetSeed(int flag) {
   else if (flag == 0) {
     state = 0;
     while (state == 0) {
-      srand((unsigned) time(nullptr));
+      srand((unsigned)time(nullptr));
       state = rand();
     }
   } else {
@@ -40,7 +40,7 @@ CLCRandNum::Uniform() {
     state = tmpState;
   else
     state = tmpState + M;
-  u = state / (double) M;
+  u = state / (double)M;
   return u;
 }
 
@@ -106,7 +106,7 @@ CWHRandNum::SetSeed(int flag) {
     Y = 0;
     Z = 0;
     while (X == 0 || Y == 0 || Z == 0) {
-      srand((unsigned) time(nullptr));
+      srand((unsigned)time(nullptr));
       X = rand();
       Y = rand();
       Z = rand();

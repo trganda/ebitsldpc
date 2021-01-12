@@ -6,19 +6,19 @@
 #include <ctime>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <sstream>
 #include <string>
-#include <map>
 
 #ifndef __FILENAME__
 #define __FILENAME__ __FILE__
 #endif
-#define LOG(level, flag)                                                                   \
-    if (level <= lab::logger::Log::get().log_level())                                      \
-    lab::logger::Log::get().log_stream(flag) << '[' << lab::logger::Log::get_time() << ']' \
-                                             << '[' << __FILENAME__ << ':' << std::dec << __LINE__ << "] "
+#define LOG(level, flag)                                                                 \
+  if (level <= lab::logger::Log::get().log_level())                                      \
+  lab::logger::Log::get().log_stream(flag) << '[' << lab::logger::Log::get_time() << ']' \
+                                           << '[' << __FILENAME__ << ':' << std::dec << __LINE__ << "] "
 namespace lab::logger {
 enum Level {
   Error,
@@ -26,8 +26,7 @@ enum Level {
 };
 const std::map<Level, std::string> colored{
     {Error, " \x1b[31;1m[ERROR]\x1b[0m "},
-    {Info, " \x1b[32;1m[INFO]\x1b[0m "}
-};
+    {Info, " \x1b[32;1m[INFO]\x1b[0m "}};
 //Courtesy of http://wordaligned.org/articles/cpp-streambufs#toctee-streams
 class TeeBuf : public std::streambuf {
  public:

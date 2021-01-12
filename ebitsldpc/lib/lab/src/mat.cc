@@ -92,7 +92,7 @@ Mat::WriteComplex(const std::string &varname, std::complex<double> data) {
   }
   size_t dims[2] = {1, 1};
   double x[1] = {data.real()},
-      y[1] = {data.imag()};
+         y[1] = {data.imag()};
   struct mat_complex_split_t datas = {x, y};
   matvar_t *mat_var = Mat_VarCreate(
       varname.c_str(),

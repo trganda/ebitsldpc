@@ -1,7 +1,12 @@
-#ifndef SIMULATOR_H_
-#define SIMULATOR_H_
+#ifndef EBITSLDPC_SIMULATOR_H_
+#define EBITSLDPC_SIMULATOR_H_
 
-#include "viterbi.h"
+#include <algorithm>
+#include <complex>
+#include <fstream>
+#include <iomanip>
+#include <thread>
+#include <vector>
 
 #include "log.h"
 #include "modemlinearsystem.h"
@@ -10,13 +15,10 @@
 #include "thread_pool.h"
 #include "threadsafe_sourcesink.h"
 #include "toml.hpp"
+#include "viterbi.h"
 #include "xorsegcodec.h"
-#include <algorithm>
-#include <complex>
-#include <fstream>
-#include <iomanip>
-#include <thread>
-#include <vector>
+
+#include "xorsegcodec.h"
 
 typedef struct CodecData {
   CodecData(const CodecData &codec_data) {
@@ -61,12 +63,15 @@ class Simulator {
   void Run();
 
  private:
-  std::pair<double, double> run(
-      lab::XORSegCodec &codec, lab::ModemLinearSystem mls, CodecData &cdata,
-      double snr, bool histogram_enable);
-  void run_blocks(lab::XORSegCodec codec, lab::ModemLinearSystem mls,
-                  lab::threadsafe_sourcesink &ssink, CodecData cdata,
-                  std::fstream &out, double snr, bool histogram_enable, unsigned int max_block) const;
+  std::pair<double, double> run(XORSegCodec &codec,
+                                lab::ModemLinearSystem mls, CodecData &cdata,
+                                double snr, bool histogram_enable);
+  void run_blocks(XORSegCodec codec,
+                  lab::ModemLinearSystem mls,
+                  lab::threadsafe_sourcesink &ssink,
+                  lab::threadsafe_sourcesink &ebits_ssink,
+                  CodecData cdata,
+                  double snr, unsigned int max_block) const;
 
  private:
   const toml::value arguments_;
@@ -82,10 +87,8 @@ class Simulator {
   unsigned int max_num_blk_;
   // Maximum blocks for each threads
   unsigned int thread_num_blk_;
-  // Known H for simulation
-  bool known_h_;
-  lab::XORSegCodec codec_;
+  XORSegCodec codec_;
   CodecData codec_data_;
   lab::ModemLinearSystem modem_linear_system_;
 };
-#endif //SIMULATOR_H_
+#endif//EBITSLDPC_SIMULATOR_H_

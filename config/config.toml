@@ -8,9 +8,6 @@
     # maximum blocks for each threads under the snr
     thread_block_number = 1
 
-[decoder]
-    true_h_arg = false
-
 [xcodec]
     # default, using normal ldcp.
     5gldpc = false
@@ -18,6 +15,10 @@
     metric_type = false
     # only use for 5g ldpc
     metric_iter = 5
+    # length of extra bits
+    ebits_length = 1
+    # size of list for decoding extra bits
+    list_size = 1
 
 [histogram]
     enable = false

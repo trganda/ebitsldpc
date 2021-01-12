@@ -69,7 +69,7 @@ Log::log_stream() {
 
 std::ostream &
 Log::log_stream(bool flag) {
-  auto ptr = (TeeStream *) log_stream_;
+  auto ptr = (TeeStream *)log_stream_;
   ptr->tbuf().set_flag(flag);
   return *log_stream_;
 }

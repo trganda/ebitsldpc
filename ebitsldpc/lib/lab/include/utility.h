@@ -27,9 +27,10 @@ typedef struct Edge {
   struct Edge *down;
 } Edge;
 namespace utility {
-// using inline to avoid multi definition of function
 void
 MatrixProd(int *uu, int *cc, int **G, int dim, int len);
+void
+MatrixProd(int *uu, int *cc, std::vector<std::vector<int>> &G, int dim, int len);
 void
 ProbClip(double *xx, int len_xx);
 std::ostream &

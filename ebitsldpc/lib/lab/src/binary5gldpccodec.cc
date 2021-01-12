@@ -30,7 +30,7 @@ Binary5GLDPCCodec::Binary5GLDPCCodec(const toml::value &arguments)
   code_len_no_puncture_ = num_col_;
   code_len_puncture_ = num_col_ - lifting_factor_ * 2;
   code_dim_ = code_len_no_puncture_ - code_chk_;
-  coderate_ = (double) code_dim_ / code_len_puncture_;
+  coderate_ = (double)code_dim_ / code_len_puncture_;
   cc_no_puncture_ = new int[code_len_no_puncture_];
   cc_soft_no_puncture_ = new double[code_len_no_puncture_];
   row_head_ = new Edge[num_row_];
@@ -380,7 +380,7 @@ Binary5GLDPCCodec::SystemMatrixH() {
   }
   code_len_no_puncture_ = num_col_;
   code_dim_ = code_len_no_puncture_ - code_chk_;
-  coderate_ = (double) code_dim_ / code_len_puncture_;
+  coderate_ = (double)code_dim_ / code_len_puncture_;
   delete[] tempP;
   for (i = 0; i < num_row_; i++) {
     delete[] tempH[i];
